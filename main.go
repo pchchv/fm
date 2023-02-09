@@ -8,18 +8,19 @@ import (
 )
 
 var (
-	singleMode    bool
-	clientID      int
-	hostname      string
-	lastDirPath   string
-	selectionPath string
-	socketProt    string
-	socketPath    string
-	logPath       string
-	sSelect       string
-	configPath    string
-	flags         arrayFlag
-	version       string
+	genSingleMode    bool
+	genClientID      int
+	genHostname      string
+	genLastDirPath   string
+	genSelectionPath string
+	genSocketProt    string
+	genSocketPath    string
+	genLogPath       string
+	genSelect        string
+	genConfigPath    string
+	genCommands      arrayFlag
+	genVersion       string
+	genDocString     = `TODO`
 )
 
 type arrayFlag []string
@@ -36,7 +37,7 @@ func (a *arrayFlag) String() string {
 func main() {
 	flag.Usage = func() {
 		f := flag.CommandLine.Output()
-		fmt.Fprintln(f, "fm - Terminal file manager")
+		fmt.Fprintln(f, "lf - Terminal file manager")
 		fmt.Fprintln(f, "")
 		fmt.Fprintf(f, "Usage:  %s [options] [cd-or-select-path]\n\n", os.Args[0])
 		fmt.Fprintln(f, "  cd-or-select-path")
@@ -53,11 +54,12 @@ func main() {
 	remoteCmd := flag.String("remote", "", "send remote command to server")
 	cpuprofile := flag.String("cpuprofile", "", "path to the file to write the CPU profile")
 	memprofile := flag.String("memprofile", "", "path to the file to write the memory profile")
-	flag.StringVar(&lastDirPath, "last-dir-path", "", "path to the file to write the last dir on exit (to use for cd)")
-	flag.StringVar(&selectionPath, "selection-path", "", "path to the file to write selected files on open (to use as open file dialog)")
-	flag.StringVar(&configPath, "config", "", "path to the config file (instead of the usual paths)")
-	flag.Var(&flags, "command", "command to execute on client initialization")
-	flag.StringVar(&logPath, "log", "", "path to the log file to write messages")
+
+	flag.StringVar(&genLastDirPath, "last-dir-path", "", "path to the file to write the last dir on exit (to use for cd)")
+	flag.StringVar(&genSelectionPath, "selection-path", "", "path to the file to write selected files on open (to use as open file dialog)")
+	flag.StringVar(&genConfigPath, "config", "", "path to the config file (instead of the usual paths)")
+	flag.Var(&genCommands, "command", "command to execute on client initialization")
+	flag.StringVar(&genLogPath, "log", "", "path to the log file to write messages")
 
 	flag.Parse()
 }
