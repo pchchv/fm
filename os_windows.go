@@ -23,3 +23,5 @@ func detachedCommand(name string, arg ...string) *exec.Cmd {
 	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: 8}
 	return cmd
 }
+
+func setUserUmask() {}

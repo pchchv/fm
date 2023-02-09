@@ -28,3 +28,7 @@ func detachedCommand(name string, arg ...string) *exec.Cmd {
 	cmd.SysProcAttr = &unix.SysProcAttr{Setsid: true}
 	return cmd
 }
+
+func setUserUmask() {
+	unix.Umask(0o077)
+}
