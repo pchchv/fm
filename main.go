@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"strings"
 )
@@ -32,6 +34,28 @@ func (a *arrayFlag) Set(v string) error {
 
 func (a *arrayFlag) String() string {
 	return strings.Join(*a, ", ")
+}
+
+func startServer() {
+	cmd := detachedCommand(os.Args[0], "-server")
+	if err := cmd.Start(); err != nil {
+		log.Printf("starting server: %s", err)
+	}
+}
+
+func checkServer() {
+	if genSocketProt == "unix" {
+		if _, err := os.Stat(genSocketPath); os.IsNotExist(err) {
+			startServer()
+		} else if _, err := net.Dial(genSocketProt, genSocketPath); err != nil {
+			os.Remove(genSocketPath)
+			startServer()
+		}
+	} else {
+		if _, err := net.Dial(genSocketProt, genSocketPath); err != nil {
+			startServer()
+		}
+	}
 }
 
 func main() {
