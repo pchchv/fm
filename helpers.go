@@ -145,3 +145,36 @@ func runeSliceWidthRange(rs []rune, beg, end int) []rune {
 	}
 	return nil
 }
+
+// humanize converts the size in bytes to human-readable form using metric suffixes (e.g., 1K = 1000).
+// For values less than 10, the first significant digit is shown, otherwise it is hidden.
+// Numbers are always rounded down.
+// This should suit most people.
+func humanize(size int64) string {
+	if size < 1000 {
+		return fmt.Sprintf("%dB", size)
+	}
+
+	suffix := []string{
+		"K", // kilo
+		"M", // mega
+		"G", // giga
+		"T", // tera
+		"P", // peta
+		"E", // exa
+		"Z", // zeta
+		"Y", // yotta
+	}
+
+	curr := float64(size) / 1000
+	for _, s := range suffix {
+		if curr < 10 {
+			return fmt.Sprintf("%.1f%s", curr-0.0499, s)
+		} else if curr < 1000 {
+			return fmt.Sprintf("%d%s", int(curr), s)
+		}
+		curr /= 1000
+	}
+
+	return ""
+}
