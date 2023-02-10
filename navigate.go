@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/djherbis/times"
@@ -190,4 +191,37 @@ func readdir(path string) ([]*file, error) {
 	}
 
 	return files, err
+}
+
+func normalize(s1, s2 string, ignorecase, ignoredia bool) (string, string) {
+	if genOpts.ignorecase {
+		s1 = strings.ToLower(s1)
+		s2 = strings.ToLower(s2)
+	}
+	if genOpts.ignoredia {
+		s1 = removeDiacritics(s1)
+		s2 = removeDiacritics(s2)
+	}
+	return s1, s2
+}
+
+func searchMatch(name, pattern string) (matched bool, err error) {
+	if genOpts.ignorecase {
+		lpattern := strings.ToLower(pattern)
+		if !genOpts.smartcase || lpattern == pattern {
+			pattern = lpattern
+			name = strings.ToLower(name)
+		}
+	}
+	if genOpts.ignoredia {
+		lpattern := removeDiacritics(pattern)
+		if !genOpts.smartdia || lpattern == pattern {
+			pattern = lpattern
+			name = removeDiacritics(name)
+		}
+	}
+	if genOpts.globsearch {
+		return filepath.Match(pattern, name)
+	}
+	return strings.Contains(name, pattern), nil
 }
