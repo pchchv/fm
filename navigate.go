@@ -76,6 +76,36 @@ func (file *file) TotalSize() int64 {
 	return file.Size()
 }
 
+func (dir *dir) name() string {
+	if len(dir.files) == 0 {
+		return ""
+	}
+
+	return dir.files[dir.ind].Name()
+}
+
+func (dir *dir) sel(name string, height int) {
+	if len(dir.files) == 0 {
+		dir.ind, dir.pos = 0, 0
+		return
+	}
+
+	dir.ind = max(dir.ind, 0)
+	dir.ind = min(dir.ind, len(dir.files)-1)
+
+	if dir.files[dir.ind].Name() != name {
+		for i, f := range dir.files {
+			if f.Name() == name {
+				dir.ind = i
+				break
+			}
+		}
+	}
+
+	edge := min(min(height/2, genOpts.scrolloff), len(dir.files)-dir.ind-1)
+	dir.pos = min(dir.ind, height-edge-1)
+}
+
 func readdir(path string) ([]*file, error) {
 	f, err := os.Open(path)
 	if err != nil {
