@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"unicode"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // splitWord splits the first word of a space-separated string from the rest.
@@ -113,4 +115,33 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func runeSliceWidth(rs []rune) (w int) {
+	for _, r := range rs {
+		w += runewidth.RuneWidth(r)
+	}
+	return
+}
+
+func runeSliceWidthRange(rs []rune, beg, end int) []rune {
+	curr := 0
+	b := 0
+
+	for i, r := range rs {
+		w := runewidth.RuneWidth(r)
+
+		switch {
+		case curr == beg:
+			b = i
+		case curr < beg && curr+w > beg:
+			b = i + 1
+		case curr == end:
+			return rs[b:i]
+		case curr > end:
+			return rs[b : i-1]
+		}
+		curr += w
+	}
+	return nil
 }
