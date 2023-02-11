@@ -225,3 +225,19 @@ func searchMatch(name, pattern string) (matched bool, err error) {
 	}
 	return strings.Contains(name, pattern), nil
 }
+
+//lint:ignore U1000 This function is not used on Windows
+func matchPattern(pattern, name, path string) bool {
+	s := name
+
+	pattern = replaceTilde(pattern)
+
+	if filepath.IsAbs(pattern) {
+		s = filepath.Join(path, name)
+	}
+
+	// pattern errors are checked when 'hiddenfiles' option is set
+	matched, _ := filepath.Match(pattern, s)
+
+	return matched
+}
