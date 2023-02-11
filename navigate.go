@@ -49,6 +49,11 @@ type dir struct {
 	lines       []string  // lines of text to display if directory previews are enabled
 }
 
+type indexedSelections struct {
+	paths   []string
+	indices []int
+}
+
 func newDir(path string) *dir {
 	time := time.Now()
 
@@ -105,6 +110,19 @@ func (dir *dir) sel(name string, height int) {
 
 	edge := min(min(height/2, genOpts.scrolloff), len(dir.files)-dir.ind-1)
 	dir.pos = min(dir.ind, height-edge-1)
+}
+
+func (m indexedSelections) Len() int {
+	return len(m.paths)
+}
+
+func (m indexedSelections) Swap(i, j int) {
+	m.paths[i], m.paths[j] = m.paths[j], m.paths[i]
+	m.indices[i], m.indices[j] = m.indices[j], m.indices[i]
+}
+
+func (m indexedSelections) Less(i, j int) bool {
+	return m.indices[i] < m.indices[j]
 }
 
 func readdir(path string) ([]*file, error) {
