@@ -13,6 +13,15 @@ type callExpr struct {
 	count int
 }
 
+type setExpr struct {
+	opt string
+	val string
+}
+
 func (e *callExpr) String() string {
 	return fmt.Sprintf("%s -- %s", e.name, e.args)
+}
+
+func (e *setExpr) String() string {
+	return fmt.Sprintf("set %s %s", e.opt, e.val)
 }
