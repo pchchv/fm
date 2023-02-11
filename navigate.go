@@ -49,6 +49,50 @@ type dir struct {
 	lines       []string  // lines of text to display if directory previews are enabled
 }
 
+type nav struct {
+	init            bool
+	dirs            []*dir
+	copyBytes       int64
+	copyTotal       int64
+	copyUpdate      int
+	moveCount       int
+	moveTotal       int
+	moveUpdate      int
+	deleteCount     int
+	deleteTotal     int
+	deleteUpdate    int
+	copyBytesChan   chan int64
+	copyTotalChan   chan int64
+	moveCountChan   chan int
+	moveTotalChan   chan int
+	deleteCountChan chan int
+	deleteTotalChan chan int
+	previewChan     chan string
+	dirPreviewChan  chan *dir
+	dirChan         chan *dir
+	regChan         chan *reg
+	dirCache        map[string]*dir
+	regCache        map[string]*reg
+	saves           map[string]bool
+	marks           map[string]string
+	renameOldPath   string
+	renameNewPath   string
+	selections      map[string]int
+	tags            map[string]string
+	selectionInd    int
+	height          int
+	find            string
+	findBack        bool
+	search          string
+	searchBack      bool
+	searchInd       int
+	searchPos       int
+	prevFilter      []string
+	volatilePreview bool
+	jumpList        []string
+	jumpListInd     int
+}
+
 type indexedSelections struct {
 	paths   []string
 	indices []int
@@ -70,6 +114,33 @@ func newDir(path string) *dir {
 		allFiles: files,
 		noPerm:   os.IsPermission(err),
 	}
+}
+
+func newNav(height int) *nav {
+	nav := &nav{
+		copyBytesChan:   make(chan int64, 1024),
+		copyTotalChan:   make(chan int64, 1024),
+		moveCountChan:   make(chan int, 1024),
+		moveTotalChan:   make(chan int, 1024),
+		deleteCountChan: make(chan int, 1024),
+		deleteTotalChan: make(chan int, 1024),
+		previewChan:     make(chan string, 1024),
+		dirPreviewChan:  make(chan *dir, 1024),
+		dirChan:         make(chan *dir),
+		regChan:         make(chan *reg),
+		dirCache:        make(map[string]*dir),
+		regCache:        make(map[string]*reg),
+		saves:           make(map[string]bool),
+		marks:           make(map[string]string),
+		selections:      make(map[string]int),
+		tags:            make(map[string]string),
+		selectionInd:    0,
+		height:          height,
+		jumpList:        make([]string, 0),
+		jumpListInd:     -1,
+	}
+
+	return nav
 }
 
 func (file *file) TotalSize() int64 {
@@ -242,6 +313,7 @@ func (dir *dir) sort() {
 	dir.ind = max(dir.ind, 0)
 	dir.ind = min(dir.ind, len(dir.files)-1)
 }
+
 func (m indexedSelections) Len() int {
 	return len(m.paths)
 }
