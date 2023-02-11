@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -219,4 +220,8 @@ func naturalLess(s1, s2 string) bool {
 
 		return s1[lo1:hi1] < s2[lo2:hi2]
 	}
+}
+
+func isRoot(name string) bool {
+	return filepath.Dir(name) == name
 }
