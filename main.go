@@ -204,4 +204,78 @@ func main() {
 	flag.StringVar(&genLogPath, "log", "", "path to the log file to write messages")
 
 	flag.Parse()
+
+	genSocketProt = genDefaultSocketProt
+	genSocketPath = genDefaultSocketPath
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			golog.Fatal("could not create CPU profile: %s", err)
+		}
+		if err := pprof.StartCPUProfile(f); err != nil {
+			golog.Fatal("could not start CPU profile: %s", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
+	switch {
+	case *showDoc:
+		fmt.Println(genDocString)
+	case *showVersion:
+		fmt.Println(genVersion)
+	case *remoteCmd != "":
+		if err := remote(*remoteCmd); err != nil {
+			golog.Fatal("remote command: %s", err)
+		}
+	case *serverMode:
+		if genLogPath != "" && !filepath.IsAbs(genLogPath) {
+			wd, err := os.Getwd()
+			if err != nil {
+				golog.Fatal("getting current directory: %s", err)
+			} else {
+				genLogPath = filepath.Join(wd, genLogPath)
+			}
+		}
+		os.Chdir(genUser.HomeDir)
+		serve()
+	default:
+		genSingleMode = *singleMode
+
+		if !genSingleMode {
+			checkServer()
+		}
+
+		genClientID = os.Getpid()
+
+		switch flag.NArg() {
+		case 0:
+			_, err := os.Getwd()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "getting current directory: %s\n", err)
+				os.Exit(2)
+			}
+		case 1:
+			genSelect = flag.Arg(0)
+		default:
+			fmt.Fprintf(os.Stderr, "only single file or directory is allowed\n")
+			os.Exit(2)
+		}
+
+		exportEnvVars()
+
+		run()
+	}
+
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			golog.Fatal("could not create memory profile: ", err)
+		}
+		runtime.GC()
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			golog.Fatal("could not write memory profile: ", err)
+		}
+		f.Close()
+	}
 }
