@@ -3,8 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 )
+
+type parser struct {
+	scanner *scanner
+	expr    expr
+	err     error
+}
 
 type expr interface {
 	String() string
@@ -108,4 +115,162 @@ func (e *listExpr) String() string {
 	buf.WriteString("}}")
 
 	return buf.String()
+}
+
+func newParser(r io.Reader) *parser {
+	scanner := newScanner(r)
+
+	scanner.scan()
+
+	return &parser{
+		scanner: scanner,
+	}
+}
+
+func (p *parser) parseExpr() expr {
+	s := p.scanner
+
+	var result expr
+
+	switch s.typ {
+	case tokenEOF:
+		return nil
+	case tokenIdent:
+		switch s.tok {
+		case "set":
+			var val string
+
+			s.scan()
+			if s.typ != tokenIdent {
+				p.err = fmt.Errorf("expected identifier: %s", s.tok)
+			}
+			opt := s.tok
+
+			s.scan()
+			if s.typ != tokenSemicolon {
+				val = s.tok
+				s.scan()
+			}
+
+			s.scan()
+
+			result = &setExpr{opt, val}
+		case "map":
+			var expr expr
+
+			s.scan()
+			keys := s.tok
+
+			s.scan()
+			if s.typ != tokenSemicolon {
+				expr = p.parseExpr()
+			} else {
+				s.scan()
+			}
+
+			result = &mapExpr{keys, expr}
+		case "cmap":
+			var expr expr
+
+			s.scan()
+			key := s.tok
+
+			s.scan()
+			if s.typ != tokenSemicolon {
+				expr = p.parseExpr()
+			} else {
+				s.scan()
+			}
+
+			result = &cmapExpr{key, expr}
+		case "cmd":
+			var expr expr
+
+			s.scan()
+			name := s.tok
+
+			s.scan()
+			if s.typ != tokenSemicolon {
+				expr = p.parseExpr()
+			} else {
+				s.scan()
+			}
+
+			result = &cmdExpr{name, expr}
+		default:
+			name := s.tok
+
+			var args []string
+			for s.scan() && s.typ != tokenSemicolon {
+				args = append(args, s.tok)
+			}
+
+			s.scan()
+
+			result = &callExpr{name, args, 1}
+		}
+	case tokenColon:
+		s.scan()
+
+		var exprs []expr
+		if s.typ == tokenLBraces {
+			s.scan()
+			for {
+				e := p.parseExpr()
+				if e == nil {
+					return nil
+				}
+				exprs = append(exprs, e)
+				if s.typ == tokenRBraces {
+					break
+				}
+			}
+			s.scan()
+		} else {
+			for {
+				e := p.parseExpr()
+				if e == nil {
+					return nil
+				}
+				exprs = append(exprs, e)
+				if s.tok == "\n" {
+					break
+				}
+			}
+		}
+
+		s.scan()
+
+		result = &listExpr{exprs, 1}
+	case tokenPrefix:
+		var expr string
+
+		prefix := s.tok
+
+		s.scan()
+		if s.typ == tokenLBraces {
+			s.scan()
+			expr = s.tok
+			s.scan()
+		} else {
+			expr = s.tok
+		}
+
+		s.scan()
+		s.scan()
+
+		result = &execExpr{prefix, expr}
+	default:
+		p.err = fmt.Errorf("unexpected token: %s", s.tok)
+	}
+
+	return result
+}
+
+func (p *parser) parse() bool {
+	if p.expr = p.parseExpr(); p.expr == nil {
+		return false
+	}
+
+	return true
 }
