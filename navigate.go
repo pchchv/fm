@@ -112,6 +112,136 @@ func (dir *dir) sel(name string, height int) {
 	dir.pos = min(dir.ind, height-edge-1)
 }
 
+func (dir *dir) sort() {
+	dir.sortType = genOpts.sortType
+	dir.dironly = genOpts.dironly
+	dir.hiddenfiles = genOpts.hiddenfiles
+	dir.ignorecase = genOpts.ignorecase
+	dir.ignoredia = genOpts.ignoredia
+	dir.files = dir.allFiles
+
+	switch dir.sortType.method {
+	case naturalSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			s1, s2 := normalize(dir.files[i].Name(), dir.files[j].Name(), dir.ignorecase, dir.ignoredia)
+			return naturalLess(s1, s2)
+		})
+	case nameSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			s1, s2 := normalize(dir.files[i].Name(), dir.files[j].Name(), dir.ignorecase, dir.ignoredia)
+			return s1 < s2
+		})
+	case sizeSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			return dir.files[i].TotalSize() < dir.files[j].TotalSize()
+		})
+	case timeSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			return dir.files[i].ModTime().Before(dir.files[j].ModTime())
+		})
+	case atimeSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			return dir.files[i].accessTime.Before(dir.files[j].accessTime)
+		})
+	case ctimeSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			return dir.files[i].changeTime.Before(dir.files[j].changeTime)
+		})
+	case extSort:
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			ext1, ext2 := normalize(dir.files[i].ext, dir.files[j].ext, dir.ignorecase, dir.ignoredia)
+
+			// if the extension cannot be defined (directories, files without an extension),
+			// a null byte is used so that these files can be ranked higher
+			if ext1 == "" {
+				ext1 = "\x00"
+			}
+			if ext2 == "" {
+				ext2 = "\x00"
+			}
+
+			name1, name2 := normalize(dir.files[i].Name(), dir.files[j].Name(), dir.ignorecase, dir.ignoredia)
+
+			// for natural sorting of filenames, the name is combined with ext, but ext must come first
+			return ext1 < ext2 || ext1 == ext2 && name1 < name2
+		})
+	}
+
+	if dir.sortType.option&reverseSort != 0 {
+		for i, j := 0, len(dir.files)-1; i < j; i, j = i+1, j-1 {
+			dir.files[i], dir.files[j] = dir.files[j], dir.files[i]
+		}
+	}
+
+	if dir.sortType.option&dirfirstSort != 0 {
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			if dir.files[i].IsDir() == dir.files[j].IsDir() {
+				return i < j
+			}
+			return dir.files[i].IsDir()
+		})
+	}
+
+	// when the dironly option is enabled, the files are moved to the beginning of our file list,
+	// and then the beginning of the displayed files is set to the first directory in the list
+	if dir.dironly {
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			if !dir.files[i].IsDir() && !dir.files[j].IsDir() {
+				return i < j
+			}
+			return !dir.files[i].IsDir()
+		})
+		dir.files = func() []*file {
+			for i, f := range dir.files {
+				if f.IsDir() {
+					return dir.files[i:]
+				}
+			}
+			return dir.files[len(dir.files):]
+		}()
+	}
+
+	// when the hide option is disabled, hidden files are moved to the beginning of the file list,
+	// and then the beginning of the displayed files is set to the first unhidden file in the list
+	if dir.sortType.option&hiddenSort == 0 {
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			if isHidden(dir.files[i], dir.path, dir.hiddenfiles) && isHidden(dir.files[j], dir.path, dir.hiddenfiles) {
+				return i < j
+			}
+			return isHidden(dir.files[i], dir.path, dir.hiddenfiles)
+		})
+		for i, f := range dir.files {
+			if !isHidden(f, dir.path, dir.hiddenfiles) {
+				dir.files = dir.files[i:]
+				break
+			}
+		}
+		if len(dir.files) > 0 && isHidden(dir.files[len(dir.files)-1], dir.path, dir.hiddenfiles) {
+			dir.files = dir.files[len(dir.files):]
+		}
+	}
+
+	if len(dir.filter) != 0 {
+		sort.SliceStable(dir.files, func(i, j int) bool {
+			if isFiltered(dir.files[i], dir.filter) && isFiltered(dir.files[j], dir.filter) {
+				return i < j
+			}
+			return isFiltered(dir.files[i], dir.filter)
+		})
+		for i, f := range dir.files {
+			if !isFiltered(f, dir.filter) {
+				dir.files = dir.files[i:]
+				break
+			}
+		}
+		if len(dir.files) > 0 && isFiltered(dir.files[len(dir.files)-1], dir.filter) {
+			dir.files = dir.files[len(dir.files):]
+		}
+	}
+
+	dir.ind = max(dir.ind, 0)
+	dir.ind = min(dir.ind, len(dir.files)-1)
+}
 func (m indexedSelections) Len() int {
 	return len(m.paths)
 }
