@@ -259,3 +259,40 @@ func matchPattern(pattern, name, path string) bool {
 
 	return matched
 }
+
+func findMatch(name, pattern string) bool {
+	if genOpts.ignorecase {
+		lpattern := strings.ToLower(pattern)
+		if !genOpts.smartcase || lpattern == pattern {
+			pattern = lpattern
+			name = strings.ToLower(name)
+		}
+	}
+	if genOpts.ignoredia {
+		lpattern := removeDiacritics(pattern)
+		if !genOpts.smartdia || lpattern == pattern {
+			pattern = lpattern
+			name = removeDiacritics(name)
+		}
+	}
+	if genOpts.anchorfind {
+		return strings.HasPrefix(name, pattern)
+	}
+	return strings.Contains(name, pattern)
+}
+
+func isFiltered(f os.FileInfo, filter []string) bool {
+	for _, pattern := range filter {
+		matched, err := searchMatch(f.Name(), strings.TrimPrefix(pattern, "!"))
+		if err != nil {
+			log.Printf("Filter Error: %s", err)
+			return false
+		}
+		if strings.HasPrefix(pattern, "!") && matched {
+			return true
+		} else if !strings.HasPrefix(pattern, "!") && !matched {
+			return true
+		}
+	}
+	return false
+}
