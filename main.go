@@ -6,10 +6,20 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"runtime/pprof"
+	"strconv"
 	"strings"
+
+	"github.com/pchchv/golog"
 )
 
 var (
+	envPath  = os.Getenv("PATH")
+	envLevel = os.Getenv("FM_LEVEL")
+
 	genSingleMode    bool
 	genClientID      int
 	genHostname      string
@@ -39,7 +49,7 @@ func (a *arrayFlag) String() string {
 func startServer() {
 	cmd := detachedCommand(os.Args[0], "-server")
 	if err := cmd.Start(); err != nil {
-		log.Printf("starting server: %s", err)
+		golog.Info("starting server: %s", err)
 	}
 }
 
@@ -54,6 +64,114 @@ func checkServer() {
 	} else {
 		if _, err := net.Dial(genSocketProt, genSocketPath); err != nil {
 			startServer()
+		}
+	}
+}
+
+func exportEnvVars() {
+	os.Setenv("id", strconv.Itoa(genClientID))
+
+	os.Setenv("OPENER", envOpener)
+	os.Setenv("EDITOR", envEditor)
+	os.Setenv("PAGER", envPager)
+	os.Setenv("SHELL", envShell)
+
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "getting current directory: %s\n", err)
+	}
+	os.Setenv("OLDPWD", dir)
+
+	level, err := strconv.Atoi(envLevel)
+	if err != nil {
+		log.Printf("reading lf level: %s", err)
+	}
+
+	level++
+
+	os.Setenv("FM_LEVEL", strconv.Itoa(level))
+}
+
+func fieldToString(field reflect.Value) string {
+	kind := field.Kind()
+	var value string
+
+	switch kind {
+	case reflect.Int:
+		value = strconv.Itoa(int(field.Int()))
+	case reflect.Bool:
+		value = strconv.FormatBool(field.Bool())
+	case reflect.Slice:
+		for i := 0; i < field.Len(); i++ {
+			element := field.Index(i)
+
+			if i == 0 {
+				value = fieldToString(element)
+			} else {
+				value += ":" + fieldToString(element)
+			}
+		}
+	default:
+		value = field.String()
+	}
+
+	return value
+}
+
+func exportOpts() {
+	e := reflect.ValueOf(&genOpts).Elem()
+
+	for i := 0; i < e.NumField(); i++ {
+		// Get name and prefix it with lf_
+		name := e.Type().Field(i).Name
+		name = fmt.Sprintf("lf_%s", name)
+
+		// Skip maps
+		if name == "lf_keys" || name == "lf_cmdkeys" || name == "lf_cmds" {
+			continue
+		}
+
+		// Get string representation of the value
+		if name == "lf_sortType" {
+			var sortby string
+
+			switch genOpts.sortType.method {
+			case naturalSort:
+				sortby = "natural"
+			case nameSort:
+				sortby = "name"
+			case sizeSort:
+				sortby = "size"
+			case timeSort:
+				sortby = "time"
+			case ctimeSort:
+				sortby = "ctime"
+			case atimeSort:
+				sortby = "atime"
+			case extSort:
+				sortby = "ext"
+			}
+
+			os.Setenv("lf_sortby", sortby)
+
+			reverse := strconv.FormatBool(genOpts.sortType.option&reverseSort != 0)
+			os.Setenv("lf_reverse", reverse)
+
+			hidden := strconv.FormatBool(genOpts.sortType.option&hiddenSort != 0)
+			os.Setenv("lf_hidden", hidden)
+
+			dirfirst := strconv.FormatBool(genOpts.sortType.option&dirfirstSort != 0)
+			os.Setenv("lf_dirfirst", dirfirst)
+		} else if name == "lf_user" {
+			// set each user option
+			for key, value := range genOpts.user {
+				os.Setenv(name+"_"+key, value)
+			}
+		} else {
+			field := e.Field(i)
+			value := fieldToString(field)
+
+			os.Setenv(name, value)
 		}
 	}
 }
