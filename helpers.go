@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -177,4 +178,45 @@ func humanize(size int64) string {
 	}
 
 	return ""
+}
+
+// naturalLess compares two strings for a natural sort that takes into account
+// the values of the numbers in the strings.
+// For example, "2" is less than "10", and similarly "foo2bar" is less than "foo10bar",
+// but "bar2bar" is greater than "foo10bar".
+func naturalLess(s1, s2 string) bool {
+	lo1, lo2, hi1, hi2 := 0, 0, 0, 0
+	for {
+		if hi1 >= len(s1) {
+			return hi2 != len(s2)
+		}
+
+		if hi2 >= len(s2) {
+			return false
+		}
+
+		isDigit1 := isDigit(s1[hi1])
+		isDigit2 := isDigit(s2[hi2])
+
+		for lo1 = hi1; hi1 < len(s1) && isDigit(s1[hi1]) == isDigit1; hi1++ {
+		}
+
+		for lo2 = hi2; hi2 < len(s2) && isDigit(s2[hi2]) == isDigit2; hi2++ {
+		}
+
+		if s1[lo1:hi1] == s2[lo2:hi2] {
+			continue
+		}
+
+		if isDigit1 && isDigit2 {
+			num1, err1 := strconv.Atoi(s1[lo1:hi1])
+			num2, err2 := strconv.Atoi(s2[lo2:hi2])
+
+			if err1 == nil && err2 == nil {
+				return num1 < num2
+			}
+		}
+
+		return s1[lo1:hi1] < s2[lo2:hi2]
+	}
 }
