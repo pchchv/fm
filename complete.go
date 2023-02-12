@@ -375,3 +375,95 @@ func matchCmd(s string) (matches []string, longest []rune) {
 	return
 }
 
+func completeCmd(acc []rune) (matches []string, longestAcc []rune) {
+	s := string(acc)
+	f := tokenize(s)
+
+	var longest []rune
+
+	switch len(f) {
+	case 1:
+		matches, longestAcc = matchCmd(s)
+	case 2:
+		switch f[0] {
+		case "set":
+			matches, longest = matchWord(f[1], genOptWords)
+			longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+		case "map", "cmap", "cmd":
+			longestAcc = acc
+		default:
+			matches, longest = matchFile(f[len(f)-1])
+			longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+		}
+	case 3:
+		switch f[0] {
+		case "map", "cmap":
+			matches, longest = matchCmd(f[2])
+			longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+		default:
+			matches, longest = matchFile(f[len(f)-1])
+			longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+		}
+	default:
+		switch f[0] {
+		case "set", "map", "cmap", "cmd":
+			longestAcc = acc
+		default:
+			matches, longest = matchFile(f[len(f)-1])
+			longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+		}
+	}
+
+	return
+}
+
+func completeFile(acc []rune) (matches []string, longestAcc []rune) {
+	s := string(acc)
+
+	wd, err := os.Getwd()
+	if err != nil {
+		golog.Info("getting current directory: %s", err)
+	}
+
+	files, err := ioutil.ReadDir(wd)
+	if err != nil {
+		golog.Info("reading directory: %s", err)
+	}
+
+	for _, f := range files {
+		if !strings.HasPrefix(strings.ToLower(f.Name()), strings.ToLower(s)) {
+			continue
+		}
+
+		matches = append(matches, f.Name())
+
+		if longestAcc != nil {
+			longestAcc = matchLongest(longestAcc, []rune(f.Name()))
+		} else if s != "" {
+			longestAcc = []rune(f.Name())
+		}
+	}
+
+	if len(longestAcc) < len(acc) {
+		longestAcc = acc
+	}
+
+	return
+}
+
+func completeShell(acc []rune) (matches []string, longestAcc []rune) {
+	s := string(acc)
+	f := tokenize(s)
+
+	var longest []rune
+
+	switch len(f) {
+	case 1:
+		matches, longestAcc = matchExec(s)
+	default:
+		matches, longest = matchFile(f[len(f)-1])
+		longestAcc = append(acc[:len(acc)-len([]rune(f[len(f)-1]))], longest...)
+	}
+
+	return
+}
