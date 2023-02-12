@@ -233,3 +233,44 @@ func naturalLess(s1, s2 string) bool {
 func isRoot(name string) bool {
 	return filepath.Dir(name) == name
 }
+
+// escape is used to escape spaces and special characters with backspaces in a given string.
+func escape(s string) string {
+	buf := make([]rune, 0, len(s))
+	for _, r := range s {
+		if unicode.IsSpace(r) || r == '\\' || r == ';' || r == '#' {
+			buf = append(buf, '\\')
+		}
+		buf = append(buf, r)
+	}
+	return string(buf)
+}
+
+// unescape is used to remove backspaces,
+// which are used to escape spaces and special characters in a given string.
+func unescape(s string) string {
+	esc := false
+	buf := make([]rune, 0, len(s))
+	for _, r := range s {
+		if esc {
+			if !unicode.IsSpace(r) && r != '\\' && r != ';' && r != '#' {
+				buf = append(buf, '\\')
+			}
+			buf = append(buf, r)
+			esc = false
+			continue
+		}
+		if r == '\\' {
+			esc = true
+			continue
+		}
+		esc = false
+		buf = append(buf, r)
+	}
+
+	if esc {
+		buf = append(buf, '\\')
+	}
+
+	return string(buf)
+}
