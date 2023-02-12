@@ -293,3 +293,85 @@ func matchExec(s string) (matches []string, longest []rune) {
 	return matchWord(s, words)
 }
 
+func matchFile(s string) (matches []string, longest []rune) {
+	dir := replaceTilde(s)
+
+	if !filepath.IsAbs(dir) {
+		wd, err := os.Getwd()
+		if err != nil {
+			golog.Info("getting current directory: %s", err)
+		} else {
+			dir = wd + string(filepath.Separator) + dir
+		}
+	}
+
+	dir = filepath.Dir(unescape(dir))
+
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		golog.Info("reading directory: %s", err)
+	}
+
+	for _, f := range files {
+		name := filepath.Join(dir, f.Name())
+		f, err := os.Lstat(name)
+		if err != nil {
+			golog.Info("getting file information: %s", err)
+			continue
+		}
+
+		name = strings.ToLower(escape(f.Name()))
+		_, last := filepath.Split(s)
+		if !strings.HasPrefix(name, strings.ToLower(last)) {
+			continue
+		}
+
+		name = f.Name()
+		if isRoot(s) || filepath.Base(s) != s {
+			name = filepath.Join(filepath.Dir(unescape(s)), f.Name())
+		}
+		name = escape(name)
+
+		item := f.Name()
+		if f.Mode().IsDir() {
+			item += escape(string(filepath.Separator))
+		}
+		matches = append(matches, item)
+
+		if longest != nil {
+			longest = matchLongest(longest, []rune(name))
+		} else if s != "" {
+			if f.Mode().IsRegular() {
+				longest = []rune(name + " ")
+			} else {
+				longest = []rune(name + escape(string(filepath.Separator)))
+			}
+		}
+	}
+
+	if len(longest) < len([]rune(s)) {
+		longest = []rune(s)
+	}
+
+	return
+}
+
+func matchCmd(s string) (matches []string, longest []rune) {
+	words := genCmdWords
+	for c := range genOpts.cmds {
+		words = append(words, c)
+	}
+	sort.Strings(words)
+	j := 0
+	for i := 1; i < len(words); i++ {
+		if words[j] == words[i] {
+			continue
+		}
+		j++
+		words[i], words[j] = words[j], words[i]
+	}
+	words = words[:j+1]
+	matches, longest = matchWord(s, words)
+	return
+}
+
