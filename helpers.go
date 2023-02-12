@@ -5,11 +5,19 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/mattn/go-runewidth"
+)
+
+var (
+	reAltKey  = regexp.MustCompile(`<a-(.)>`)
+	reWord    = regexp.MustCompile(`(\pL|\pN)+`)
+	reWordBeg = regexp.MustCompile(`([^\pL\pN]|^)(\pL|\pN)`)
+	reWordEnd = regexp.MustCompile(`(\pL|\pN)([^\pL\pN]|$)`)
 )
 
 // splitWord splits the first word of a space-separated string from the rest.
