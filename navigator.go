@@ -1463,6 +1463,29 @@ func (nav *nav) findPrev() (bool, bool) {
 	return false, false
 }
 
+func (nav *nav) findSingle() int {
+	count := 0
+	index := 0
+	dir := nav.currDir()
+	for i := 0; i < len(dir.files); i++ {
+		if findMatch(dir.files[i].Name(), nav.find) {
+			count++
+			if count > 1 {
+				return count
+			}
+			index = i
+		}
+	}
+	if count == 1 {
+		if index > dir.ind {
+			nav.down(index - dir.ind)
+		} else {
+			nav.up(dir.ind - index)
+		}
+	}
+	return count
+}
+
 func (nav *nav) searchNext() (bool, error) {
 	dir := nav.currDir()
 	for i := dir.ind + 1; i < len(dir.files); i++ {
