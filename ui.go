@@ -17,6 +17,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	"github.com/pchchv/golog"
+	"golang.org/x/term"
 )
 
 const (
@@ -1247,6 +1248,19 @@ func readCmdEvent(ev tcell.Event) expr {
 	return nil
 }
 
+func anyKey() {
+	fmt.Print(genOpts.waitmsg)
+	defer fmt.Print("\n")
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	b := make([]byte, 1)
+	os.Stdin.Read(b)
+}
+
 func findBinds(keys map[string]expr, prefix string) (binds map[string]expr, ok bool) {
 	binds = make(map[string]expr)
 	for key, expr := range keys {
@@ -1277,6 +1291,39 @@ func listBinds(binds map[string]expr) *bytes.Buffer {
 		fmt.Fprintf(t, "%s\t%v\n", k, binds[k])
 	}
 	t.Flush()
+
+	return b
+}
+
+func listMatches(screen tcell.Screen, matches []string, selectedInd int) *bytes.Buffer {
+	if len(matches) < 2 {
+		return nil
+	}
+	b := new(bytes.Buffer)
+
+	wtot, _ := screen.Size()
+	wcol := 0
+	for _, m := range matches {
+		wcol = max(wcol, len(m))
+	}
+	wcol += genOpts.tabstop - wcol%genOpts.tabstop
+	ncol := wtot / wcol
+
+	b.WriteString("possible matches\n")
+
+	for i := 0; i < len(matches); {
+		for j := 0; j < ncol && i < len(matches); i, j = i+1, j+1 {
+			target := matches[i]
+
+			if selectedInd == i {
+				target = fmt.Sprintf("\033[7m%s\033[0m%*s", target, wcol-len(target), "")
+			} else {
+				target = fmt.Sprintf("%s%*s", target, wcol-len(target), "")
+			}
+			b.WriteString(target)
+		}
+		b.WriteByte('\n')
+	}
 
 	return b
 }
