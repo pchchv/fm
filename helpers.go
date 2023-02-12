@@ -274,3 +274,35 @@ func unescape(s string) string {
 
 	return string(buf)
 }
+
+// tokenize splits a given string by whitespace.
+// It is aware of hidden whitespace characters
+// so that they are not unintentionally separated.
+func tokenize(s string) []string {
+	var buf []rune
+	var toks []string
+	esc := false
+
+	for _, r := range s {
+		if r == '\\' {
+			esc = true
+			buf = append(buf, r)
+			continue
+		}
+
+		if esc {
+			esc = false
+			buf = append(buf, r)
+			continue
+		}
+
+		if !unicode.IsSpace(r) {
+			buf = append(buf, r)
+		} else {
+			toks = append(toks, string(buf))
+			buf = nil
+		}
+	}
+	toks = append(toks, string(buf))
+	return toks
+}
