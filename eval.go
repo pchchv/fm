@@ -1266,7 +1266,7 @@ func (e *callExpr) eval(app *app, args []string) {
 			app.ui.echoerr("push: requires an argument")
 			return
 		}
-		golog.Info("pushing keys", e.args[0])
+		golog.Info("pushing keys %v", e.args[0])
 		for _, val := range splitKeys(e.args[0]) {
 			app.ui.keyChan <- val
 		}

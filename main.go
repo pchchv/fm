@@ -281,11 +281,11 @@ func main() {
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
 		if err != nil {
-			golog.Fatal("could not create memory profile: ", err)
+			golog.Fatal("could not create memory profile: %v", err)
 		}
 		runtime.GC()
 		if err := pprof.WriteHeapProfile(f); err != nil {
-			golog.Fatal("could not write memory profile: ", err)
+			golog.Fatal("could not write memory profile: %v", err)
 		}
 		f.Close()
 	}
