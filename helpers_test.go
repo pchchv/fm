@@ -187,3 +187,59 @@ func TestReadPairs(t *testing.T) {
 		}
 	}
 }
+
+func TestHumanize(t *testing.T) {
+	tests := []struct {
+		i   int64
+		exp string
+	}{
+		{0, "0B"},
+		{9, "9B"},
+		{99, "99B"},
+		{999, "999B"},
+		{1000, "1.0K"},
+		{1023, "1.0K"},
+		{1025, "1.0K"},
+		{1049, "1.0K"},
+		{1050, "1.0K"},
+		{1099, "1.0K"},
+		{9999, "9.9K"},
+		{10000, "10K"},
+		{10100, "10K"},
+		{10500, "10K"},
+		{1000000, "1.0M"},
+	}
+
+	for _, test := range tests {
+		if got := humanize(test.i); got != test.exp {
+			t.Errorf("at input '%d' expected '%s' but got '%s'", test.i, test.exp, got)
+		}
+	}
+}
+
+func TestNaturalLess(t *testing.T) {
+	tests := []struct {
+		s1  string
+		s2  string
+		exp bool
+	}{
+		{"foo", "bar", false},
+		{"bar", "baz", true},
+		{"foo", "123", false},
+		{"foo1", "foobar", true},
+		{"foo1", "foo10", true},
+		{"foo2", "foo10", true},
+		{"foo1", "foo10bar", true},
+		{"foo2", "foo10bar", true},
+		{"foo1bar", "foo10bar", true},
+		{"foo2bar", "foo10bar", true},
+		{"foo1bar", "foo10", true},
+		{"foo2bar", "foo10", true},
+	}
+
+	for _, test := range tests {
+		if got := naturalLess(test.s1, test.s2); got != test.exp {
+			t.Errorf("at input '%s' and '%s' expected '%t' but got '%t'", test.s1, test.s2, test.exp, got)
+		}
+	}
+}
