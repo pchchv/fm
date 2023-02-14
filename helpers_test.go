@@ -72,3 +72,71 @@ func TestRuneSliceWidthRange(t *testing.T) {
 		}
 	}
 }
+
+func TestEscape(t *testing.T) {
+	tests := []struct {
+		s   string
+		exp string
+	}{
+		{"", ""},
+		{"foo", "foo"},
+		{"foo bar", `foo\ bar`},
+		{"foo  bar", `foo\ \ bar`},
+		{`foo\bar`, `foo\\bar`},
+		{`foo\ bar`, `foo\\\ bar`},
+		{`foo;bar`, `foo\;bar`},
+		{`foo#bar`, `foo\#bar`},
+		{`foo\tbar`, `foo\\tbar`},
+		{"foo\tbar", "foo\\\tbar"},
+		{`foo\`, `foo\\`},
+	}
+
+	for _, test := range tests {
+		if got := escape(test.s); !reflect.DeepEqual(got, test.exp) {
+			t.Errorf("at input '%v' expected '%v' but got '%v'", test.s, test.exp, got)
+		}
+	}
+}
+
+func TestUnescape(t *testing.T) {
+	tests := []struct {
+		s   string
+		exp string
+	}{
+		{"", ""},
+		{"foo", "foo"},
+		{`foo\ bar`, "foo bar"},
+		{`foo\ \ bar`, "foo  bar"},
+		{`foo\\bar`, `foo\bar`},
+		{`foo\\\ bar`, `foo\ bar`},
+		{`foo\;bar`, `foo;bar`},
+		{`foo\#bar`, `foo#bar`},
+		{`foo\\tbar`, `foo\tbar`},
+		{"foo\\\tbar", "foo\tbar"},
+		{`foo\`, `foo\`},
+	}
+
+	for _, test := range tests {
+		if got := unescape(test.s); !reflect.DeepEqual(got, test.exp) {
+			t.Errorf("at input '%v' expected '%v' but got '%v'", test.s, test.exp, got)
+		}
+	}
+}
+
+func TestTokenize(t *testing.T) {
+	tests := []struct {
+		s   string
+		exp []string
+	}{
+		{"", []string{""}},
+		{"foo", []string{"foo"}},
+		{"foo bar", []string{"foo", "bar"}},
+		{`:rename foo\ bar`, []string{":rename", `foo\ bar`}},
+	}
+
+	for _, test := range tests {
+		if got := tokenize(test.s); !reflect.DeepEqual(got, test.exp) {
+			t.Errorf("at input '%v' expected '%v' but got '%v'", test.s, test.exp, got)
+		}
+	}
+}
