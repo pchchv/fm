@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -46,6 +45,18 @@ func (a *arrayFlag) String() string {
 	return strings.Join(*a, ", ")
 }
 
+func init() {
+	h, err := os.Hostname()
+	if err != nil {
+		golog.Info("hostname: %s", err)
+	}
+	genHostname = h
+
+	if envLevel == "" {
+		envLevel = "0"
+	}
+}
+
 func startServer() {
 	cmd := detachedCommand(os.Args[0], "-server")
 	if err := cmd.Start(); err != nil {
@@ -84,7 +95,7 @@ func exportEnvVars() {
 
 	level, err := strconv.Atoi(envLevel)
 	if err != nil {
-		log.Printf("reading lf level: %s", err)
+		golog.Info("reading lf level: %s", err)
 	}
 
 	level++
