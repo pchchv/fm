@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -136,6 +137,52 @@ func TestTokenize(t *testing.T) {
 
 	for _, test := range tests {
 		if got := tokenize(test.s); !reflect.DeepEqual(got, test.exp) {
+			t.Errorf("at input '%v' expected '%v' but got '%v'", test.s, test.exp, got)
+		}
+	}
+}
+
+func TestSplitWord(t *testing.T) {
+	tests := []struct {
+		s    string
+		word string
+		rest string
+	}{
+		{"", "", ""},
+		{"foo", "foo", ""},
+		{"  foo", "foo", ""},
+		{"foo  ", "foo", ""},
+		{"  foo  ", "foo", ""},
+		{"foo bar baz", "foo", "bar baz"},
+		{"  foo bar baz", "foo", "bar baz"},
+		{"foo   bar baz", "foo", "bar baz"},
+		{"  foo   bar baz", "foo", "bar baz"},
+	}
+
+	for _, test := range tests {
+		if w, r := splitWord(test.s); w != test.word || r != test.rest {
+			t.Errorf("at input '%s' expected '%s' and '%s' but got '%s' and '%s'", test.s, test.word, test.rest, w, r)
+		}
+	}
+}
+
+func TestReadPairs(t *testing.T) {
+	tests := []struct {
+		s   string
+		exp [][]string
+	}{
+		{"foo bar", [][]string{{"foo", "bar"}}},
+		{"foo bar ", [][]string{{"foo", "bar"}}},
+		{" foo bar", [][]string{{"foo", "bar"}}},
+		{" foo bar ", [][]string{{"foo", "bar"}}},
+		{"foo bar#baz", [][]string{{"foo", "bar"}}},
+		{"foo bar #baz", [][]string{{"foo", "bar"}}},
+		{`'foo#baz' bar`, [][]string{{"foo#baz", "bar"}}},
+		{`"foo#baz" bar`, [][]string{{"foo#baz", "bar"}}},
+	}
+
+	for _, test := range tests {
+		if got, _ := readPairs(strings.NewReader(test.s)); !reflect.DeepEqual(got, test.exp) {
 			t.Errorf("at input '%v' expected '%v' but got '%v'", test.s, test.exp, got)
 		}
 	}
