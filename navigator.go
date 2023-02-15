@@ -53,7 +53,7 @@ type dir struct {
 	filter      []string  // last filter for this directory
 	ignorecase  bool      // ignorecase value from last sort
 	ignoredia   bool      // ignoredia value from last sort
-	noPerm      bool      // whether lf has no permission to open the directory
+	noPerm      bool      // whether fm has no permission to open the directory
 	lines       []string  // lines of text to display if directory previews are enabled
 }
 

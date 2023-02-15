@@ -32,7 +32,7 @@ func parseIcons() iconMap {
 
 	im.parseEnv(strings.Join(defaultIcons, ":"))
 
-	if env := os.Getenv("LF_ICONS"); env != "" {
+	if env := os.Getenv("FM_ICONS"); env != "" {
 		im.parseEnv(env)
 	}
 
@@ -83,7 +83,7 @@ func (im iconMap) parseEnv(env string) {
 		pair := strings.Split(entry, "=")
 
 		if len(pair) != 2 {
-			golog.Info("invalid $LF_ICONS entry: %s", entry)
+			golog.Info("invalid $FM_ICONS entry: %s", entry)
 			return
 		}
 

@@ -54,24 +54,24 @@ func init() {
 	data := os.Getenv("LOCALAPPDATA")
 
 	genConfigPaths = []string{
-		filepath.Join(os.Getenv("ProgramData"), "lf", "lfrc"),
-		filepath.Join(data, "lf", "lfrc"),
+		filepath.Join(os.Getenv("ProgramData"), "fm", "fmrc"),
+		filepath.Join(data, "fm", "fmrc"),
 	}
 
 	genColorsPaths = []string{
-		filepath.Join(os.Getenv("ProgramData"), "lf", "colors"),
-		filepath.Join(data, "lf", "colors"),
+		filepath.Join(os.Getenv("ProgramData"), "fm", "colors"),
+		filepath.Join(data, "fm", "colors"),
 	}
 
 	genIconsPaths = []string{
-		filepath.Join(os.Getenv("ProgramData"), "lf", "icons"),
-		filepath.Join(data, "lf", "icons"),
+		filepath.Join(os.Getenv("ProgramData"), "fm", "icons"),
+		filepath.Join(data, "fm", "icons"),
 	}
 
-	genFilesPath = filepath.Join(data, "lf", "files")
-	genMarksPath = filepath.Join(data, "lf", "marks")
-	genTagsPath = filepath.Join(data, "lf", "tags")
-	genHistoryPath = filepath.Join(data, "lf", "history")
+	genFilesPath = filepath.Join(data, "fm", "files")
+	genMarksPath = filepath.Join(data, "fm", "marks")
+	genTagsPath = filepath.Join(data, "fm", "tags")
+	genHistoryPath = filepath.Join(data, "fm", "history")
 }
 
 func detachedCommand(name string, arg ...string) *exec.Cmd {
@@ -101,7 +101,7 @@ func setDefaults() {
 	gOpts.keys["i"] = &execExpr{"!", "%PAGER% %f%"}
 	gOpts.keys["w"] = &execExpr{"$", "%SHELL%"}
 
-	gOpts.cmds["doc"] = &execExpr{"!", "lf -doc | %PAGER%"}
+	gOpts.cmds["doc"] = &execExpr{"!", "fm -doc | %PAGER%"}
 	gOpts.keys["<f-1>"] = &callExpr{"doc", nil, 1}
 }
 

@@ -31,7 +31,6 @@ var (
 	genConfigPath    string
 	genCommands      arrayFlag
 	genVersion       string
-	genDocString     = `TODO`
 )
 
 type arrayFlag []string
@@ -95,7 +94,7 @@ func exportEnvVars() {
 
 	level, err := strconv.Atoi(envLevel)
 	if err != nil {
-		golog.Info("reading lf level: %s", err)
+		golog.Info("reading fm level: %s", err)
 	}
 
 	level++
@@ -133,17 +132,17 @@ func exportOpts() {
 	e := reflect.ValueOf(&genOpts).Elem()
 
 	for i := 0; i < e.NumField(); i++ {
-		// Get name and prefix it with lf_
+		// Get name and prefix it with fm_
 		name := e.Type().Field(i).Name
-		name = fmt.Sprintf("lf_%s", name)
+		name = fmt.Sprintf("fm_%s", name)
 
 		// Skip maps
-		if name == "lf_keys" || name == "lf_cmdkeys" || name == "lf_cmds" {
+		if name == "fm_keys" || name == "fm_cmdkeys" || name == "fm_cmds" {
 			continue
 		}
 
 		// Get string representation of the value
-		if name == "lf_sortType" {
+		if name == "fm_sortType" {
 			var sortby string
 
 			switch genOpts.sortType.method {
@@ -163,17 +162,17 @@ func exportOpts() {
 				sortby = "ext"
 			}
 
-			os.Setenv("lf_sortby", sortby)
+			os.Setenv("fm_sortby", sortby)
 
 			reverse := strconv.FormatBool(genOpts.sortType.option&reverseSort != 0)
-			os.Setenv("lf_reverse", reverse)
+			os.Setenv("fm_reverse", reverse)
 
 			hidden := strconv.FormatBool(genOpts.sortType.option&hiddenSort != 0)
-			os.Setenv("lf_hidden", hidden)
+			os.Setenv("fm_hidden", hidden)
 
 			dirfirst := strconv.FormatBool(genOpts.sortType.option&dirfirstSort != 0)
-			os.Setenv("lf_dirfirst", dirfirst)
-		} else if name == "lf_user" {
+			os.Setenv("fm_dirfirst", dirfirst)
+		} else if name == "fm_user" {
 			// set each user option
 			for key, value := range genOpts.user {
 				os.Setenv(name+"_"+key, value)
@@ -190,7 +189,7 @@ func exportOpts() {
 func main() {
 	flag.Usage = func() {
 		f := flag.CommandLine.Output()
-		fmt.Fprintln(f, "lf - Terminal file manager")
+		fmt.Fprintln(f, "fm - Terminal file manager")
 		fmt.Fprintln(f, "")
 		fmt.Fprintf(f, "Usage:  %s [options] [cd-or-select-path]\n\n", os.Args[0])
 		fmt.Fprintln(f, "  cd-or-select-path")

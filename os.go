@@ -81,18 +81,18 @@ func init() {
 	}
 
 	genConfigPaths = []string{
-		filepath.Join("/etc", "lf", "lfrc"),
-		filepath.Join(config, "lf", "lfrc"),
+		filepath.Join("/etc", "fm", "fmrc"),
+		filepath.Join(config, "fm", "fmrc"),
 	}
 
 	genColorsPaths = []string{
-		filepath.Join("/etc", "lf", "colors"),
-		filepath.Join(config, "lf", "colors"),
+		filepath.Join("/etc", "fm", "colors"),
+		filepath.Join(config, "fm", "colors"),
 	}
 
 	genIconsPaths = []string{
-		filepath.Join("/etc", "lf", "icons"),
-		filepath.Join(config, "lf", "icons"),
+		filepath.Join("/etc", "fm", "icons"),
+		filepath.Join(config, "fm", "icons"),
 	}
 
 	data := os.Getenv("XDG_DATA_HOME")
@@ -100,17 +100,17 @@ func init() {
 		data = filepath.Join(genUser.HomeDir, ".local", "share")
 	}
 
-	genFilesPath = filepath.Join(data, "lf", "files")
-	genMarksPath = filepath.Join(data, "lf", "marks")
-	genTagsPath = filepath.Join(data, "lf", "tags")
-	genHistoryPath = filepath.Join(data, "lf", "history")
+	genFilesPath = filepath.Join(data, "fm", "files")
+	genMarksPath = filepath.Join(data, "fm", "marks")
+	genTagsPath = filepath.Join(data, "fm", "tags")
+	genHistoryPath = filepath.Join(data, "fm", "history")
 
 	runtime := os.Getenv("XDG_RUNTIME_DIR")
 	if runtime == "" {
 		runtime = os.TempDir()
 	}
 
-	genDefaultSocketPath = filepath.Join(runtime, fmt.Sprintf("lf.%s.sock", genUser.Username))
+	genDefaultSocketPath = filepath.Join(runtime, fmt.Sprintf("fm.%s.sock", genUser.Username))
 }
 
 func detachedCommand(name string, arg ...string) *exec.Cmd {
@@ -153,7 +153,7 @@ func setDefaults() {
 	genOpts.keys["i"] = &execExpr{"$", `$PAGER "$f"`}
 	genOpts.keys["w"] = &execExpr{"$", "$SHELL"}
 
-	genOpts.cmds["doc"] = &execExpr{"$", "lf -doc | $PAGER"}
+	genOpts.cmds["doc"] = &execExpr{"$", "fm -doc | $PAGER"}
 	genOpts.keys["<f-1>"] = &callExpr{"doc", nil, 1}
 }
 

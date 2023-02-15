@@ -1103,8 +1103,8 @@ func (ui *ui) resume() error {
 
 func (ui *ui) exportSizes() {
 	w, h := ui.screen.Size()
-	os.Setenv("lf_width", strconv.Itoa(w))
-	os.Setenv("lf_height", strconv.Itoa(h))
+	os.Setenv("fm_width", strconv.Itoa(w))
+	os.Setenv("fm_height", strconv.Itoa(h))
 }
 
 func printLength(s string) int {

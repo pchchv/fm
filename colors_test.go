@@ -68,7 +68,6 @@ func TestApplyAnsiCodes(t *testing.T) {
 		{"38;2;5;102;8", none, none.Foreground(tcell.NewRGBColor(5, 102, 8))},
 		{"48;2;0;48;143", none, none.Background(tcell.NewRGBColor(0, 48, 143))},
 
-		// Fixes color construction issue: https://github.com/gokcehan/lf/pull/439#issuecomment-674409446
 		{"38;5;34;1", none, none.Foreground(tcell.Color34).Bold(true)},
 	}
 
